@@ -1,0 +1,46 @@
+/// login.drl
+package auth
+
+import com.example.sbz.web.dto.LoginRequest;
+import com.example.sbz.model.User;
+import com.example.sbz.model.Suspension;
+import com.example.sbz.model.SuspensionType;
+
+global java.util.List errors;
+global org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
+dialect "java"
+
+function boolean activeUntil(java.time.Instant endAt) {
+  return endAt != null && endAt.isAfter(java.time.Instant.now());
+}
+
+// User must exist
+rule "LOGIN_user_exists"
+when
+  $r : LoginRequest( $email : email )
+  not( User( email == $email ) )
+then
+  errors.add("User not found");
+end
+
+// If user exists but has active LOGIN_BAN
+rule "LOGIN_suspended"
+when
+  $r : LoginRequest( $email : email )
+  $u : User( email == $email )
+  Suspension( user == $u, type == SuspensionType.LOGIN_BAN, $end : endAt, eval( activeUntil($end) ) )
+then
+  errors.add("Login banned until suspension end");
+end
+
+// Password must match
+rule "LOGIN_password_match"
+salience -1 // izvrši posle prethodnih provera
+when
+  $r : LoginRequest( $email : email, $pwd : password )
+  $u : User( email == $email, $hash : passwordHash )
+  eval( !passwordEncoder.matches($pwd, $hash) )
+then
+  errors.add("Invalid credentials");
+end

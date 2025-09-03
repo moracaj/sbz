@@ -1,0 +1,40 @@
+package detection
+
+import com.example.sbz.model.User
+import com.example.sbz.model.PostReport
+import com.example.sbz.model.Suspension
+import com.example.sbz.model.SuspensionType
+
+dialect "java"
+
+// 3 RAZLIČITE prijavljene objave istog korisnika u poslednjih 6h -> POST_BAN 6h
+rule "R6_three_distinct_reported_posts_6h"
+when
+  $u : User()
+
+  // skup različitih postova prijavljenih u poslednjih 6h, gde je autor tog posta $u
+  accumulate(
+    PostReport(
+      post.author == $u,
+      $p : post,
+      $t : reportedAt,
+      eval( $t.isAfter( java.time.Instant.now()
+               .minus(6, java.time.temporal.ChronoUnit.HOURS) ) )
+    ),
+    $distinctPosts : collectSet( $p )
+  )
+
+  // najmanje 3 različite objave
+  eval( $distinctPosts != null && ((java.util.Set)$distinctPosts).size() >= 3 )
+then
+  java.time.Instant now = java.time.Instant.now();
+
+  Suspension s = new Suspension();
+  s.setUser($u);
+  s.setType(SuspensionType.POST_BAN);
+  s.setReason("3 distinct reported posts in last 6h");
+  s.setStartAt(now);
+  s.setEndAt(now.plus(java.time.Duration.ofHours(6)));
+
+  insert(s);
+end

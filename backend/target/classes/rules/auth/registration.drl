@@ -1,0 +1,46 @@
+/// registration.drl
+package auth
+
+import com.example.sbz.web.dto.RegisterRequest;
+import com.example.sbz.model.User;
+import com.example.sbz.model.Place;
+
+global java.util.List errors;
+
+dialect "java"
+
+// Email format
+rule "REG_email_format"
+when
+  $r : RegisterRequest( email != null )
+  eval( !$r.getEmail().matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$") )
+then
+  errors.add("Email format is invalid");
+end
+
+// Password min length 6
+rule "REG_password_length"
+when
+  $r : RegisterRequest( password != null )
+  eval( $r.getPassword().length() < 6 )
+then
+  errors.add("Password too short (min 6)");
+end
+
+// Email must be unique
+rule "REG_email_unique"
+when
+  $r : RegisterRequest( $e : email )
+  exists( User( email == $e ) )
+then
+  errors.add("Email already exists");
+end
+
+// Home place must exist if provided
+rule "REG_home_place_exists"
+when
+  $r : RegisterRequest( $pid : homePlaceId != null )
+  not( Place( id == $pid ) )
+then
+  errors.add("Home place not found");
+end

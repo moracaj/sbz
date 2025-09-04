@@ -5,6 +5,8 @@ import java.util.List;
 
 public class PostDto {
   private Long id;
+  Long authorId;
+  String authorName;
   private String text;
   private Instant createdAt;
   private int likesCount;
@@ -13,6 +15,22 @@ public class PostDto {
 
   public PostDto() {}
 
+
+  public PostDto(Long id, Long authorId, String authorName, String text, Instant createdAt, int likesCount,
+			List<String> hashtags, boolean reported) {
+		super();
+		this.id = id;
+		this.authorId = authorId;
+		this.authorName = authorName;
+		this.text = text;
+		this.createdAt = createdAt;
+		this.likesCount = likesCount;
+		this.hashtags = hashtags;
+		this.reported = reported;
+	}
+  
+  
+  
   // radi kompatibilnosti sa starim pozivom (bez heštagova)
   public PostDto(Long id, String text, Instant createdAt, int likesCount) {
     this(id, text, createdAt, likesCount, List.of());

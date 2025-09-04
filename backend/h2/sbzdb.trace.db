@@ -1510,3 +1510,9 @@ Caused by: org.h2.mvstore.MVStoreException: The file is locked: C:/Users/Korisni
 	at org.h2.mvstore.SingleFileStore.open(SingleFileStore.java:81)
 	at org.h2.mvstore.MVStore.<init>(MVStore.java:286)
 	... 58 more
+2025-09-04 18:46:27.986508+02:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Data conversion error converting "'' (POST_LIKES: ""USER_ID"" BIGINT NOT NULL)"; SQL statement:
+INSERT INTO "PUBLIC"."POST_LIKES"("POST_ID","USER_ID")VALUES(?,?) [22018-224]
+2025-09-04 18:46:27.992204+02:00 jdbc[13]: exception
+org.h2.jdbc.JdbcSQLDataException: Data conversion error converting "'' (POST_LIKES: ""USER_ID"" BIGINT NOT NULL)"; SQL statement:
+INSERT INTO "PUBLIC"."POST_LIKES"("POST_ID","USER_ID")VALUES(?,?) [22018-224]

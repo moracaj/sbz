@@ -1,6 +1,9 @@
 package com.example.sbz.model;
 import java.util.HashSet;
 import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.*;
 import java.time.Instant;
 
@@ -41,6 +44,15 @@ public class User {
   private Set<User> friends = new HashSet<>();
 
 
+  @JsonIgnore
+  @ManyToMany
+  @JoinTable(
+    name = "user_blocks",
+    joinColumns = @JoinColumn(name = "blocker_id"),
+    inverseJoinColumns = @JoinColumn(name = "blocked_id")
+  )
+  private Set<User> blocked = new HashSet<>();
+  
   
 
   // --- get/set ---

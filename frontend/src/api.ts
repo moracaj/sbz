@@ -55,3 +55,52 @@ export async function getMyFriends() {
   if (!r.ok) throw new Error(await r.text());
   return r.json() as Promise<Array<{id:number, firstName:string, lastName:string, email:string, friend:boolean}>>;
 }
+
+
+async function authedGET<T = any>(path: string): Promise<T> {
+  const r = await fetch(`${BASE}${path}`, { headers: authHeaders() })
+  if (!r.ok) throw new Error(await r.text())
+  return r.json()
+}
+
+async function authedPOST<T = any>(path: string, body?: any): Promise<T> {
+  const r = await fetch(`${BASE}${path}`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: body ? JSON.stringify(body) : undefined
+  })
+  if (!r.ok) throw new Error(await r.text())
+  return r.json()
+}
+
+async function authedDELETE<T = any>(path: string): Promise<T> {
+  const r = await fetch(`${BASE}${path}`, {
+    method: 'DELETE',
+    headers: authHeaders()
+  })
+  if (!r.ok) throw new Error(await r.text())
+  return r.json()
+}
+
+// (opciono) tip za povrat sa user pretragе/lista
+type UserSummary = {
+  id: number
+  firstName: string
+  lastName: string
+  email: string
+  friend: boolean
+  blocked?: boolean
+}
+
+// --- nove funkcije koje Friends.tsx koristi ---
+export async function getBlocked(): Promise<UserSummary[]> {
+  return authedGET('/api/users/me/blocked')
+}
+
+export async function blockUser(id: number): Promise<{ message: string }> {
+  return authedPOST(`/api/users/${id}/block`)
+}
+
+export async function unblockUser(id: number): Promise<{ message: string }> {
+  return authedDELETE(`/api/users/${id}/block`)
+}

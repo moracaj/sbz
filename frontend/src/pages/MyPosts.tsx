@@ -5,7 +5,7 @@ type PostDto = {
   text: string
   createdAt: string
   hashtags?: string[]
-  likeCount: number
+  likesCount: number
 }
 
 const BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8080'
@@ -122,7 +122,7 @@ export default function MyPosts() {
               </div>
               <div style={{margin:'6px 0', whiteSpace:'pre-wrap'}}>{p.text}</div>
               <div style={{fontSize:12, opacity:.8}}>
-                👍 {p.likeCount} {p.hashtags && p.hashtags.length ? ' • #' + p.hashtags.join(' #') : ''}
+                👍 {p.likesCount} {p.hashtags && p.hashtags.length ? ' • #' + p.hashtags.join(' #') : ''}
               </div>
             </div>
           ))}

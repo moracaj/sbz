@@ -75,7 +75,7 @@ public interface UserRepo extends JpaRepository<User, Long> {
   @Query(value = "DELETE FROM user_friends WHERE user_id=:a AND friend_id=:b", nativeQuery = true)
   int unlinkFriend(@Param("a") Long a, @Param("b") Long b);
   
-  
+
   
   
 }

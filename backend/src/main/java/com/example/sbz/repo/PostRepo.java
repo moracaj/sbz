@@ -24,7 +24,7 @@ public interface PostRepo extends JpaRepository<Post, Long> {
  // Poslednja 24h od prijatelja
     @Query("""
       select p from Post p
-      where p.author.id in :authorId and p.createdAt >= :after
+      where p.author.id in :authorIds and p.createdAt >= :after
       order by p.createdAt desc
     """)
     List<Post> recentFromAuthors(@Param("authorIds") Collection<Long> authorIds,

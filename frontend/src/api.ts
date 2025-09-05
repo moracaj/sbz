@@ -104,3 +104,7 @@ export async function blockUser(id: number): Promise<{ message: string }> {
 export async function unblockUser(id: number): Promise<{ message: string }> {
   return authedDELETE(`/api/users/${id}/block`)
 }
+
+export async function getFeed(){
+  return authedGET<{friends:any[], recommended:any[]}>('/api/feed')
+}

@@ -37,13 +37,15 @@ public class PostEngagementController {
   public ResponseEntity<EngagementDto> toggleLike(@PathVariable("id") Long id, Authentication auth) {
     User u = me(auth);
     Post p = postRepo.findById(id).orElseThrow();
+
     if (p.getLikedBy().contains(u)) {
       p.getLikedBy().remove(u);
     } else {
       p.getLikedBy().add(u);
     }
     p = postRepo.save(p);
-    int likes = (p.getLikedBy() == null) ? 0 : p.getLikedBy().size();
+
+    int likes = (p.getLikedBy()==null) ? 0 : p.getLikedBy().size();
     return ResponseEntity.ok(new EngagementDto(p.getId(), likes, false));
   }
 
@@ -55,17 +57,16 @@ public class PostEngagementController {
     Post p = postRepo.findById(id).orElseThrow();
 
     boolean already = p.getReports() != null && p.getReports().stream()
-        .anyMatch(r -> r.getReporter() != null && r.getReporter().getId().equals(u.getId()));
-
+        .anyMatch(r -> r.getReporter()!=null && r.getReporter().getId().equals(u.getId()));
     if (!already) {
       PostReport r = new PostReport();
       r.setPost(p);
       r.setReporter(u);
-      p.getReports().add(r); // @OneToMany(cascade=ALL, orphanRemoval=true) u Post
+      p.getReports().add(r);     // Post ima @OneToMany(cascade=ALL, orphanRemoval=true)
       p = postRepo.save(p);
     }
 
-    int likes = (p.getLikedBy() == null) ? 0 : p.getLikedBy().size();
+    int likes = (p.getLikedBy()==null) ? 0 : p.getLikedBy().size();
     return ResponseEntity.ok(new EngagementDto(p.getId(), likes, true));
   }
 }

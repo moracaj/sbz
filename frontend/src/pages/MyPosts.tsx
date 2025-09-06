@@ -105,6 +105,9 @@ export default function MyPosts() {
         <button onClick={() => go('/Friends')} style={{ padding:'8px 12px', borderRadius:6, border:'1px solid #ccc', cursor:'pointer' }}>
           Prijatelji
         </button>
+        <button onClick={() => go('/Places')} style={{ padding:'8px 12px', borderRadius:6, border:'1px solid #ccc', cursor:'pointer' }}>
+          Mesta
+        </button>
       </div>
 
       {/* MAIN: lista levo, forma desno */}

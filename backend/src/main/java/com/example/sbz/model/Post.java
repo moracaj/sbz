@@ -36,6 +36,9 @@ public class Post {
   @OneToMany(mappedBy="post", cascade=CascadeType.ALL, orphanRemoval=true)
   private Set<PostReport> reports;
 
+  
+  
+  
   public Long getId() { return id; }
   public void setId(Long id) { this.id = id; }
   public User getAuthor() { return author; }

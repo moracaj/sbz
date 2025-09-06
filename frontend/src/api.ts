@@ -108,3 +108,11 @@ export async function unblockUser(id: number): Promise<{ message: string }> {
 export async function getFeed(){
   return authedGET<{friends:any[], recommended:any[]}>('/api/feed')
 }
+
+export async function likePost(postId: number){
+  return authedPOST<{postId:number; likesCount:number; reported:boolean}>(`/api/posts/${postId}/like`);
+}
+
+export async function reportPost(postId: number){
+  return authedPOST<{postId:number; likesCount:number; reported:boolean}>(`/api/posts/${postId}/report`);
+}

@@ -11,36 +11,40 @@ dialect "java"
 
 // Popularna objava: u poslednja 24h i dovoljno lajkova
 rule "popular post"
+no-loop
 when
-  $c : Candidate( isYoungerThanHours(24, now) && likes >= 10 )
+  $c : Candidate( isYoungerThanHours(24, now) && likes >=6 )
 then
   $c.addScore(1, "popularPost");
-  update($c);
+  //update($c);
 end
 
 // Popularan hešteg u poslednjih 24h
 rule "popular hashtag"
+no-loop
 when
   $c : Candidate( hasAny(popularHashtags) )
 then
   $c.addScore(1, "popularHashtag");
-  update($c);
+  //update($c);
 end
 
 // Tvoji heštegovi (iz sopstvenih objava)
 rule "own hashtag affinity"
+no-loop 
 when
   $c : Candidate( hasAny(ownHashtags) )
 then
   $c.addScore(1, "ownHashtag");
-  update($c);
+   //update($c);
 end
 
 // Heštegovi koje korisnik lajkuje (ako još nemaš like-ove, ostaje 0)
 rule "liked hashtag affinity"
+no-loop
 when
   $c : Candidate( hasAny(likedHashtags) )
 then
   $c.addScore(1, "likedHashtag");
-  update($c);
+  //update($c);
 end

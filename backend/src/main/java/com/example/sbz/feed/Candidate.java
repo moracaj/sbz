@@ -13,6 +13,7 @@ public class Candidate {
 
   private int score = 0;
   private final List<String> reasons = new ArrayList<>();
+  private List<Integer> scoreEvents = new ArrayList<>();
 
   public Candidate(Long postId, Long authorId, Collection<String> hashtags, int likes, Instant createdAt) {
     this.postId = postId;
@@ -37,7 +38,44 @@ public class Candidate {
     }
     return false;
   }
-  public void addScore(int delta, String reason) { this.score += delta; if (reason != null) reasons.add(reason); }
+  public void addScore(int delta, String reason) { 
+	  this.score += delta; 
+	  if (reason != null) 
+		  reasons.add(reason); 
+  }
+  
+  
+  
+  
+  // === Helper 1: da li je objavu lajkovao bar jedan korisnik iz zadatog skupa ===
+  @SuppressWarnings("unchecked")
+  public boolean likedByAny(Set<Long> userIds, Map<Long, Set<Long>> likersByPost) {
+      if (userIds == null || userIds.isEmpty() || likersByPost == null) return false;
+      Set<Long> likers = likersByPost.get(postId);
+      if (likers == null || likers.isEmpty()) return false;
+      for (Long u : likers) if (userIds.contains(u)) return true;
+      return false;
+  }
+
+  // === Helper 2: ≥threshold preklapanje lajkera sa bilo kojom objavom koju je gledalac lajkovao ===
+  @SuppressWarnings("unchecked")
+  public boolean likerOverlapAtLeast(Set<Long> viewerLikedPostIds, Map<Long, Set<Long>> likersByPost, double thr) {
+      if (viewerLikedPostIds == null || viewerLikedPostIds.isEmpty() || likersByPost == null) return false;
+      Set<Long> a = likersByPost.get(postId);
+      if (a == null || a.isEmpty()) return false;
+
+      for (Long otherPostId : viewerLikedPostIds) {
+          Set<Long> b = likersByPost.get(otherPostId);
+          if (b == null || b.isEmpty()) continue;
+          int inter = 0;
+          for (Long u : a) if (b.contains(u)) inter++;
+          // “70% korisnika koji su lajkovali jednu pojave se i u drugoj”
+          double base = Math.max(1, a.size()); // da izbegnemo /0
+          if (inter / base >= thr) return true;
+      }
+      return false;
+  }
+  
 
   // --- getters ---
   public Long getPostId() { return postId; }

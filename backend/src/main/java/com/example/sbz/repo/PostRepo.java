@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Set;
 import java.time.Instant;
 import java.util.Collection;
 
@@ -45,6 +46,27 @@ public interface PostRepo extends JpaRepository<Post, Long> {
       where p.createdAt >= :after
     """)
     List<Post> recentAll(@Param("after") Instant after);
+    
+    // koliko je posmatrač objava napisao
+    @Query("select count(p) from Post p where p.author.id = :authorId")
+    long countByAuthor(@Param("authorId") Long authorId);
 
+    // postovi koje je korisnik lajkovao (opciono filtriraj po vremenu)
+  @Query("""
+             select p from Post p join p.likedBy u
+            where u.id = :userId
+              and (:since is null or p.createdAt >= :since)
+             """)
+      List<Post> findPostsUserLiked(@Param("userId") Long userId,
+                                    @Param("since") Instant since);
+  
+
+  // parovi (postId, userId) za grupisanje u Map<Long, Set<Long>>
+      @Query("""
+             select p.id, u.id
+             from Post p join p.likedBy u
+             where p.id in :postIds
+             """)
+      List<Object[]> findLikerPairsByPostIds(@Param("postIds") Set<Long> postIds);
 
 }

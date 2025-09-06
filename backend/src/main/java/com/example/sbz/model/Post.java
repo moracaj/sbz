@@ -29,6 +29,9 @@ public class Post {
      joinColumns=@JoinColumn(name="post_id"),
      inverseJoinColumns=@JoinColumn(name="user_id"))
   private Set<User> likedBy;
+  public int getLikeCount() {
+	    return likedBy == null ? 0 : likedBy.size(); 
+	}
 
   @OneToMany(mappedBy="post", cascade=CascadeType.ALL, orphanRemoval=true)
   private Set<PostReport> reports;

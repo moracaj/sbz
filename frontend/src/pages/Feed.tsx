@@ -1,9 +1,18 @@
 import { useEffect, useState } from 'react'
 import { getFeed } from '../api'
+import { likePost, reportPost } from '../api'
+
 
 type Post = {
-  id:number; authorId:number; authorName:string;
-  text:string; createdAt:string; likes:number; hashtags:string[]
+  id:number; 
+  authorId:number; 
+  authorName:string;
+  text:string; 
+  createdAt:string; 
+  //likedBy:string[]; 
+  likesCount:number;
+  hashtags:string[];
+   reported?: boolean;
 }
 
 export default function Feed(){
@@ -21,9 +30,41 @@ export default function Feed(){
     <li key={p.id} style={{border:'1px solid #ddd', padding:12, borderRadius:8}}>
       <div style={{fontWeight:600}}>{p.authorName}</div>
       <div style={{whiteSpace:'pre-wrap', margin:'6px 0'}}>{p.text}</div>
-      <div style={{fontSize:12, opacity:.7}}>
-        ❤️ {p.likes} · {new Date(p.createdAt).toLocaleString()} · {p.hashtags?.map(h=>'#'+h).join(' ')}
-      </div>
+      {/* <div style={{fontSize:12, opacity:.7}}>
+        ❤️ {p.likesCount} · {new Date(p.createdAt).toLocaleString()} · {p.hashtags?.map(h=>'#'+h).join(' ')}
+      </div> */}
+    
+
+    <div style={{display:'flex', gap:8, alignItems:'center', flexWrap:'wrap'}}>
+      <button
+        onClick={async () => {
+          try {
+            const x = await likePost(p.id);
+            p.likesCount = x.likesCount;
+          } catch(e){ console.error(e); }
+        }}
+      >❤️ Like ({p.likesCount ?? 0})</button>
+
+      <button
+        disabled={p.reported}
+        title={p.reported ? 'Već prijavljeno' : 'Prijavi sadržaj'}
+        onClick={async () => {
+          try {
+            const x = await reportPost(p.id);
+            p.reported = true;
+          } catch(e){ console.error(e); }
+        }}
+      >🚩 Report</button>
+
+      <span style={{fontSize:12, opacity:.7}}>
+        {new Date(p.createdAt).toLocaleString()} · {p.hashtags?.map(h=>'#'+h).join(' ')}
+      </span>
+    </div>
+
+
+
+
+
     </li>
   )
 

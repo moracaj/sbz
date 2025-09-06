@@ -1,0 +1,40 @@
+package feed
+import com.example.sbz.feed.Candidate;
+
+global java.time.Instant now;
+
+// Napredno — ulazni skupovi iz servisa:
+global java.util.Set    similarUserIds;      // korisnici slični posmatraču (Pearson ≥ 0.5)
+global java.util.Set    viewerLikedPostIds;  // ID-evi objava koje je posmatrač lajkovao
+global java.util.Map    likersByPost;        // postId -> Set<userId> koji su lajk.
+global java.util.Set    preferredHashtags;   // heštegovi za koje je user lajkovao ≥3 objave u poslednja 3 dana
+
+dialect "java"
+
+// 1) Dopalo se sličnim korisnicima (post lajkovao bar jedan sličan korisnik)
+rule "adv: liked by similar users"
+when
+  $c : Candidate( likedByAny(similarUserIds, likersByPost) )
+then
+  $c.addScore(1, "similarUsers");
+  update($c);
+end
+
+// 2) Slično objavama koje su se dopale posmatraču
+// (≥70% korisnika koji su lajkovali neku od posmatračevih omiljenih objava pojavljuju se i ovde)
+rule "adv: similar to viewer liked posts"
+when
+  $c : Candidate( likerOverlapAtLeast(viewerLikedPostIds, likersByPost, 0.70) )
+then
+  $c.addScore(1, "similarPosts70");
+  update($c);
+end
+
+// 3) Odgovara preferencama (korisnik lajkovao ≥3 objave sa istim heštegom u prethodna 3 dana)
+rule "adv: matches user preferences"
+when
+  $c : Candidate( hasAny(preferredHashtags) )
+then
+  $c.addScore(1, "prefsHashtag");
+  update($c);
+end

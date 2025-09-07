@@ -10,7 +10,8 @@ public class Post {
   @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @ManyToOne(optional=false)
+  @ManyToOne(optional = false, fetch = FetchType.LAZY)
+  @JoinColumn(name = "author_id", nullable = false)
   private User author;
 
   @Column(columnDefinition="TEXT")

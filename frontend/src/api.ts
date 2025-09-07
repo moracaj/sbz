@@ -1,14 +1,17 @@
-export const api = {
-  detectBadUsers: async () => {
-    const res = await fetch(`${BASE}/api/admin/detect-bad-users`, {
-      method: 'POST',
-      headers: authHeaders(),
-    });
-    if (!res.ok) throw new Error(await res.text());
-    return res.json();
-  }
-}
+export type SuspensionDto = {
+  id: number;
+  user: { id:number; firstName:string; lastName:string };
+  startAt: string;
+  endAt: string | null;
+  type: string;
+  reason: string;
+};
 
+// ispravljena funkcija – koristi isti helper kao i admin “places”
+export const api = {
+  detectBadUsers: async (): Promise<SuspensionDto[]> =>
+    authedPOST('/api/admin/detect-bad-users', {}),  // POST na /api/admin/...
+};
 
 export async function register(data: {
   firstName: string; lastName: string; email: string; password: string; homePlaceId?: number;
@@ -97,30 +100,7 @@ export async function getMyFriends() {
 }
 
 
-// async function authedGET<T = any>(path: string): Promise<T> {
-//   const r = await fetch(`${BASE}${path}`, { headers: authHeaders() })
-//   if (!r.ok) throw new Error(await r.text())
-//   return r.json()
-// }
 
-// async function authedPOST<T = any>(path: string, body?: any): Promise<T> {
-//   const r = await fetch(`${BASE}${path}`, {
-//     method: 'POST',
-//     headers: authHeaders(),
-//     body: body ? JSON.stringify(body) : undefined
-//   })
-//   if (!r.ok) throw new Error(await r.text())
-//   return r.json()
-// }
-
-// async function authedDELETE<T = any>(path: string): Promise<T> {
-//   const r = await fetch(`${BASE}${path}`, {
-//     method: 'DELETE',
-//     headers: authHeaders()
-//   })
-//   if (!r.ok) throw new Error(await r.text())
-//   return r.json()
-// }
 
 export async function authedGET<T>(path: string): Promise<T> {
   return req('GET', path);

@@ -107,6 +107,8 @@ export default function MyPosts() {
         </button>
         <button onClick={() => go('/Places')} style={{ padding:'8px 12px', borderRadius:6, border:'1px solid #ccc', cursor:'pointer' }}>
           Mesta
+        </button> <button onClick={() => go('/admin/bad-users')} style={{ padding:'8px 12px', borderRadius:6, border:'1px solid #ccc', cursor:'pointer' }}>
+          Losi korisnici
         </button>
       </div>
 

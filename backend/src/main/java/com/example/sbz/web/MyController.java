@@ -13,6 +13,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.sbz.model.SuspensionType;
+import com.example.sbz.repo.SuspensionRepo;
 
 import java.time.Instant;
 import java.util.*;
@@ -23,7 +25,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/me")
 @CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
-public class MyController {
+/*public class MyController {
 
   private final UserRepo userRepo;
   private final PostRepo postRepo;
@@ -33,7 +35,16 @@ public class MyController {
     this.userRepo = userRepo;
     this.postRepo = postRepo;
     this.hashtagRepo = hashtagRepo;
-  }
+  }*/
+
+ public class MyController {
+   private final UserRepo userRepo;
+   private final PostRepo postRepo;
+   private final HashtagRepo hashtagRepo;
+   private final SuspensionRepo suspensionRepo;
+   public MyController(UserRepo userRepo, PostRepo postRepo, HashtagRepo hashtagRepo, SuspensionRepo suspensionRepo) {
+     this.userRepo = userRepo; this.postRepo = postRepo; this.hashtagRepo = hashtagRepo; this.suspensionRepo = suspensionRepo;
+   }
 
   @Transactional(readOnly = true)
   @GetMapping("/posts")
@@ -63,6 +74,15 @@ public class MyController {
     var me = userRepo.findByEmail(auth.getName())
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "no user"));
 
+    var now = java.time.Instant.now();
+    var active = suspensionRepo.findByUserAndEndAtAfter(me, now).stream()
+        .anyMatch(s -> s.getType() == SuspensionType.POST_BAN);
+    if (active) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Zabranjeno objavljivanje – aktivna suspenzija (POST ban).");
+    }
+    
+    
+    
     if (req == null || req.getText() == null || req.getText().isBlank()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "text is required");
     }

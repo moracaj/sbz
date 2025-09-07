@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import java.time.Instant;
 
 import java.util.Objects;
 
@@ -62,6 +63,7 @@ public class PostEngagementController {
       PostReport r = new PostReport();
       r.setPost(p);
       r.setReporter(u);
+      r.setCreatedAt(Instant.now());
       p.getReports().add(r);     // Post ima @OneToMany(cascade=ALL, orphanRemoval=true)
       p = postRepo.save(p);
     }

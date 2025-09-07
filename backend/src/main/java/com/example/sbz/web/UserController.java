@@ -8,19 +8,29 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import com.example.sbz.model.BlockEvent;
+import com.example.sbz.repo.BlockEventRepo;
+import java.time.Instant;
 
 import java.util.List;
 
 @CrossOrigin(origins = {"http://localhost:5173","http://127.0.0.1:5173"})
 @RestController
 @RequestMapping("/api/users")
-public class UserController {
+/*public class UserController {
 
   private final UserRepo userRepo;
 
   public UserController(UserRepo userRepo) {
     this.userRepo = userRepo;
-  }
+  }*/
+
+ public class UserController {
+   private final UserRepo userRepo;
+   private final BlockEventRepo blockEventRepo;
+   public UserController(UserRepo userRepo, BlockEventRepo blockEventRepo) {
+     this.userRepo = userRepo; this.blockEventRepo = blockEventRepo;
+   }
   
 private String usernameOf(Authentication auth) {
   var p = auth.getPrincipal();
@@ -125,6 +135,15 @@ private User meWithFriends(Authentication auth) {
     userRepo.unlinkFriend(id, me.getId());
 
     int x = userRepo.linkBlockIfAbsent(me.getId(), id);
+    if (x > 0) { // novi blok – upiši događaj
+	      BlockEvent ev = new BlockEvent();
+	      ev.setTarget(userRepo.findById(id).orElseThrow());
+	      ev.setByUser(me);
+	      ev.setCreatedAt(Instant.now());
+	      blockEventRepo.save(ev);
+	      // (po želji) razdruži ako su prijatelji – već imaš unlinkFriend u repo-u
+	      userRepo.unlinkFriend(me.getId(), id);
+	    }
     return ResponseEntity.ok(new MessageDto(x == 0 ? "Već je blokiran." : "Korisnik blokiran."));
   }
 
@@ -134,6 +153,7 @@ private User meWithFriends(Authentication auth) {
     User me = me(auth);
     userRepo.findById(id).orElseThrow();
     int x = userRepo.unlinkBlock(me.getId(), id);
+       
     return ResponseEntity.ok(new MessageDto(x == 0 ? "Nije bio blokiran." : "Deblokiran."));
   }
 

@@ -6,6 +6,6 @@ import org.springframework.data.repository.query.Param;
 import java.time.Instant;
 import java.util.List;
 public interface BlockEventRepo extends JpaRepository<BlockEvent, Long> {
-  @Query("select b from BlockEvent b where b.occurredAt >= :after")
+  @Query("select b from BlockEvent b where b.createdAt  >= :after")
   List<BlockEvent> findAllAfter(@Param("after") Instant after);
 }

@@ -8,6 +8,9 @@ import Feed from './pages/Feed'
 import Ads from './pages/Ads'
 import AdminBadUsers from './pages/AdminBadUsers'
 import MyPosts from './pages/MyPosts'
+import Friends from './pages/Friends'
+import Places from './pages/Places';
+
 
 const router = createBrowserRouter([
   { path: '/', element: <App /> },
@@ -17,6 +20,8 @@ const router = createBrowserRouter([
   { path: '/ads', element: <Ads /> },
   { path: '/admin/bad-users', element: <AdminBadUsers /> },
   { path:'/me/posts', element:<MyPosts /> },
+  { path: '/friends', element: <Friends /> },
+  {path: '/places', element: <Places/>}
 ])
 
 createRoot(document.getElementById('root')!).render(

@@ -1,4 +1,8 @@
 package com.example.sbz.model;
+import java.util.HashSet;
+import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
 import java.time.Instant;
@@ -28,6 +32,28 @@ public class User {
   @ManyToOne
   @JoinColumn(name = "home_place_id")
   private Place homePlace;
+  
+  
+  
+  @ManyToMany
+  @JoinTable(
+    name = "user_friends",
+    joinColumns = @JoinColumn(name = "user_id"),
+    inverseJoinColumns = @JoinColumn(name = "friend_id")
+  )
+  private Set<User> friends = new HashSet<>();
+
+
+  @JsonIgnore
+  @ManyToMany
+  @JoinTable(
+    name = "user_blocks",
+    joinColumns = @JoinColumn(name = "blocker_id"),
+    inverseJoinColumns = @JoinColumn(name = "blocked_id")
+  )
+  private Set<User> blocked = new HashSet<>();
+  
+  
 
   // --- get/set ---
   public Long getId() { return id; }
@@ -59,4 +85,8 @@ public class User {
 
   public Place getHomePlace() { return homePlace; }
   public void setHomePlace(Place homePlace) { this.homePlace = homePlace; }
+
+  public Set<User> getFriends() { return friends; }
+  public void setFriends(Set<User> friends) { this.friends = friends; }
+
 }

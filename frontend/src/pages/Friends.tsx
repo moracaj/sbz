@@ -1,0 +1,281 @@
+// import { useEffect, useState, KeyboardEvent } from 'react'
+// import { addFriend, getMyFriends, searchUsers } from '../api'
+
+// type U = { id:number; firstName:string; lastName:string; email:string; friend:boolean, blocked?:boolean }
+
+// export default function Friends(){
+//   const [q, setQ] = useState('')
+//   const [results, setResults] = useState<U[]>([])
+//   const [friends, setFriends] = useState<U[]>([])
+//   const [loading, setLoading] = useState(false)
+//   const [blocked, setBlocked] = useState<U[]>([])
+//   const [msg, setMsg] = useState<string>()
+
+//   useEffect(() => {
+//     getMyFriends().then(setFriends).catch(e=>setMsg(e.message))
+    
+//   }, [])
+
+//   async function doSearch(){
+//     const query = q.trim()
+//     if(!query){ setResults([]); return }
+//     try{
+//       setLoading(true)
+//       const res = await searchUsers(query)
+//       setResults(res)
+//       setMsg(undefined)
+//     }catch(e:any){
+//       setMsg(e.message || 'Greška pri pretrazi')
+//     }finally{
+//       setLoading(false)
+//     }
+//   }
+
+//   function onKeyDown(e: KeyboardEvent<HTMLInputElement>){
+//     if(e.key === 'Enter'){ doSearch() }
+//   }
+
+//   async function onAdd(u:U){
+//     try{
+//       const r = await addFriend(u.id)
+//       setMsg(r.message)
+//       setResults(prev => prev.map(x => x.id===u.id ? {...x, friend:true} : x))
+//       const fresh = await getMyFriends()
+//       setFriends(fresh)
+//     }catch(e:any){ setMsg(e.message) }
+//   }
+
+//   return (
+//     <div style={{display:'grid', gap:16, maxWidth:720}}>
+//       <h2>Friends</h2>
+
+//       <div style={{display:'flex', gap:8}}>
+//         <input
+//           placeholder="Pretraži po imenu, prezimenu ili emailu…"
+//           value={q}
+//           onChange={e=>setQ(e.target.value)}
+//           onKeyDown={onKeyDown}
+//           style={{flex:1, padding:8}}
+//         />
+//         <button onClick={doSearch} disabled={loading || !q.trim()} style={{padding:'8px 12px'}}>
+//           {loading ? 'Tražim…' : 'Search'}
+//         </button>
+//       </div>
+
+//       {results.length>0 && (
+//         <div>
+//           <h3>Rezultati pretrage</h3>
+//           <ul style={{listStyle:'none', padding:0, display:'grid', gap:8}}>
+//             {results.map(u=>(
+//               <li key={u.id} style={{display:'flex', justifyContent:'space-between', alignItems:'center', border:'1px solid #ddd', padding:8, borderRadius:8}}>
+//                 <div>
+//                   <div style={{fontWeight:600}}>{u.firstName} {u.lastName}</div>
+//                   <div style={{fontSize:12, opacity:.8}}>{u.email}</div>
+//                 </div>
+//                 <button
+//                   disabled={u.friend}
+//                   onClick={()=>onAdd(u)}
+//                   style={{padding:'6px 10px'}}
+//                 >
+//                   {u.friend ? 'Već prijatelj' : 'Dodaj prijatelja'}
+//                 </button>
+//               </li>
+//             ))}
+//           </ul>
+//         </div>
+//       )}
+
+//       <div>
+//         <h3>Moji prijatelji</h3>
+//         {friends.length===0 ? <div>Nema prijatelja još.</div> : (
+//           <ul style={{listStyle:'none', padding:0, display:'grid', gap:8}}>
+//             {friends.map(u=>(
+//               <li key={u.id} style={{border:'1px solid #ddd', padding:8, borderRadius:8}}>
+//                 <div style={{fontWeight:600}}>{u.firstName} {u.lastName}</div>
+//                 <div style={{fontSize:12, opacity:.8}}>{u.email}</div>
+//               </li>
+//             ))}
+//           </ul>
+//         )}
+//       </div>
+
+//       {msg && <div style={{fontSize:12, opacity:.8}}>{msg}</div>}
+//     </div>
+//   )
+  
+// }
+
+
+
+
+
+import { useEffect, useState, KeyboardEvent } from 'react'
+import { addFriend, getMyFriends, searchUsers, getBlocked, blockUser, unblockUser } from '../api'
+
+type U = { id:number; firstName:string; lastName:string; email:string; friend:boolean; blocked?:boolean }
+
+export default function Friends(){
+  const [q, setQ] = useState('')
+  const [results, setResults] = useState<U[]>([])
+  const [friends, setFriends] = useState<U[]>([])
+  const [blocked, setBlocked] = useState<U[]>([])
+  const [loading, setLoading] = useState(false)
+  const [msg, setMsg] = useState<string>()
+
+  useEffect(() => {
+    refreshLists().catch(e=>setMsg(e.message))
+  }, [])
+
+  async function refreshLists(){
+    const [f, b] = await Promise.all([getMyFriends(), getBlocked()])
+    setFriends(f)
+    setBlocked(b)
+  }
+
+  async function doSearch(){
+    const query = q.trim()
+    if(!query){ setResults([]); return }
+    try{
+      setLoading(true)
+      const res = await searchUsers(query)
+      setResults(res) // backend sada vraća i friend i blocked (blocked može biti undefined -> tretiramo kao false)
+      setMsg(undefined)
+    }catch(e:any){
+      setMsg(e.message || 'Greška pri pretrazi')
+    }finally{
+      setLoading(false)
+    }
+  }
+
+  function onKeyDown(e: KeyboardEvent<HTMLInputElement>){
+    if(e.key === 'Enter'){ doSearch() }
+  }
+
+  async function onAdd(u:U){
+    try{
+      if (u.blocked) { setMsg('Ne možeš dodati — korisnik je blokiran.'); return; }
+      const r = await addFriend(u.id)
+      setMsg(r.message)
+      // označi u rezultatima kao prijatelja i osveži liste
+      setResults(prev => prev.map(x => x.id===u.id ? {...x, friend:true} : x))
+      await refreshLists()
+    }catch(e:any){
+      setMsg(e.message)
+    }
+  }
+
+  async function onBlock(u:U){
+    try{
+      const r = await blockUser(u.id)
+      setMsg(r.message)
+      // osveži liste; u rezultatima markiraj blocked i skini friend flag
+      await refreshLists()
+      setResults(prev => prev.map(x => x.id===u.id ? {...x, blocked:true, friend:false} : x))
+    }catch(e:any){
+      setMsg(e.message)
+    }
+  }
+
+  async function onUnblock(u:U){
+    try{
+      const r = await unblockUser(u.id)
+      setMsg(r.message)
+      await refreshLists()
+      setResults(prev => prev.map(x => x.id===u.id ? {...x, blocked:false} : x))
+    }catch(e:any){
+      setMsg(e.message)
+    }
+  }
+
+  return (
+    <div style={{display:'grid', gap:16, maxWidth:720}}>
+      <h2>Friends</h2>
+
+      <div style={{display:'flex', gap:8}}>
+        <input
+          placeholder="Pretraži po imenu, prezimenu ili emailu…"
+          value={q}
+          onChange={e=>setQ(e.target.value)}
+          onKeyDown={onKeyDown}
+          style={{flex:1, padding:8}}
+        />
+        <button onClick={doSearch} disabled={loading || !q.trim()} style={{padding:'8px 12px'}}>
+          {loading ? 'Tražim…' : 'Search'}
+        </button>
+      </div>
+
+      {results.length>0 && (
+        <div>
+          <h3>Rezultati pretrage</h3>
+          <ul style={{listStyle:'none', padding:0, display:'grid', gap:8}}>
+            {results.map(u=>{
+              const isBlocked = !!u.blocked
+              return (
+                <li key={u.id} style={{display:'flex', justifyContent:'space-between', alignItems:'center', border:'1px solid #ddd', padding:8, borderRadius:8}}>
+                  <div>
+                    <div style={{fontWeight:600}}>{u.firstName} {u.lastName}</div>
+                    <div style={{fontSize:12, opacity:.8}}>{u.email}</div>
+                  </div>
+                  <div style={{display:'flex', gap:8}}>
+                    {isBlocked ? (
+                      <button onClick={()=>onUnblock(u)} style={{padding:'6px 10px'}}>Deblokiraj</button>
+                    ) : u.friend ? (
+                      <button onClick={()=>onBlock(u)} style={{padding:'6px 10px'}}>Blokiraj</button>
+                    ) : (
+                      <>
+                        <button
+                          disabled={u.friend || isBlocked}
+                          onClick={()=>onAdd(u)}
+                          style={{padding:'6px 10px'}}
+                        >
+                          {u.friend ? 'Već prijatelj' : 'Dodaj prijatelja'}
+                        </button>
+                        <button onClick={()=>onBlock(u)} style={{padding:'6px 10px'}}>Blokiraj</button>
+                      </>
+                    )}
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      )}
+
+      <div>
+        <h3>Moji prijatelji</h3>
+        {friends.length===0 ? <div>Nema prijatelja još.</div> : (
+          <ul style={{listStyle:'none', padding:0, display:'grid', gap:8}}>
+            {friends.map(u=>(
+              <li key={u.id} style={{display:'flex', justifyContent:'space-between', alignItems:'center', border:'1px solid #ddd', padding:8, borderRadius:8}}>
+                <div>
+                  <div style={{fontWeight:600}}>{u.firstName} {u.lastName}</div>
+                  <div style={{fontSize:12, opacity:.8}}>{u.email}</div>
+                </div>
+                <button onClick={()=>onBlock(u)} style={{padding:'6px 10px'}}>Blokiraj</button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div>
+        <h3>Blokirani</h3>
+        {blocked.length===0 ? <div>Nema blokiranih.</div> : (
+          <ul style={{listStyle:'none', padding:0, display:'grid', gap:8}}>
+            {blocked.map(u=>(
+              <li key={u.id} style={{display:'flex', justifyContent:'space-between', alignItems:'center', border:'1px solid #ddd', padding:8, borderRadius:8}}>
+                <div>
+                  <div style={{fontWeight:600}}>{u.firstName} {u.lastName}</div>
+                  <div style={{fontSize:12, opacity:.8}}>{u.email}</div>
+                </div>
+                <button onClick={()=>onUnblock(u)} style={{padding:'6px 10px'}}>Deblokiraj</button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {msg && <div style={{fontSize:12, opacity:.8}}>{msg}</div>}
+    </div>
+  )
+}

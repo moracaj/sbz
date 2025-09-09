@@ -6,6 +6,6 @@ import org.springframework.data.repository.query.Param;
 import java.time.Instant;
 import java.util.List;
 public interface PostReportRepo extends JpaRepository<PostReport, Long> {
-  @Query("select pr from PostReport pr where pr.reportedAt >= :after")
+	@Query("select pr from PostReport pr where pr.createdAt >= :after")
   List<PostReport> findAllAfter(@Param("after") Instant after);
 }

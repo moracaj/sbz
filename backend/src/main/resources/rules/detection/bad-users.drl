@@ -1,40 +1,177 @@
-package detection
-
-import com.example.sbz.model.User
-import com.example.sbz.model.PostReport
-import com.example.sbz.model.Suspension
-import com.example.sbz.model.SuspensionType
-
+package rules.detection
 dialect "java"
 
-// 3 RAZLIČITE prijavljene objave istog korisnika u poslednjih 6h -> POST_BAN 6h
-rule "R6_three_distinct_reported_posts_6h"
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+
+import com.example.sbz.model.BlockEvent;
+import com.example.sbz.model.PostReport;
+import com.example.sbz.model.Suspension;
+import com.example.sbz.model.SuspensionType;
+//import static com.example.sbz.model.SuspensionType.*;
+global java.util.List suspensionSink;
+
+// Ako već postoji Java klasa ProcessedKey – ukloni ovaj declare i samo importuj klasu.
+declare ProcessedKey
+    key : String
+end
+
+global Instant NOW;
+global Instant SINCE_1D;
+global Instant SINCE_2D;
+global Instant SINCE_6H;
+global java.util.List sink;
+
+/* R1: >5 prijava jedne objave u 1 dan -> POSTING ban 1 dan */
+rule "R1: >5 prijava jedne objave u 1 dan -> POSTING ban 1 dan"
 when
-  $u : User()
-
-  // skup različitih postova prijavljenih u poslednjih 6h, gde je autor tog posta $u
-  accumulate(
-    PostReport(
-      post.author == $u,
-      $p : post,
-      $t : reportedAt,
-      eval( $t.isAfter( java.time.Instant.now()
-               .minus(6, java.time.temporal.ChronoUnit.HOURS) ) )
-    ),
-    $distinctPosts : collectSet( $p )
-  )
-
-  // najmanje 3 različite objave
-  eval( $distinctPosts != null && ((java.util.Set)$distinctPosts).size() >= 3 )
+    $r : PostReport( getPost() != null,
+                     getPost().getAuthor() != null,
+                     getCreatedAt().isAfter(SINCE_1D) )
+    accumulate(
+        PostReport( getPost() == $r.getPost(),
+                    getCreatedAt().isAfter(SINCE_1D) ),
+        $num : count(1);
+        $num > 5
+    )
+    not ProcessedKey( key == "R1-" + $r.getPost().getId() )
 then
-  java.time.Instant now = java.time.Instant.now();
+    Suspension s = new Suspension();
+    s.setUser($r.getPost().getAuthor());
+    s.setType(SuspensionType.POST_BAN);
+    s.setEndAt(NOW.plus(1, ChronoUnit.DAYS));
+    s.setReason("R1: >5 prijava/1d");
+    sink.add(s);
+    insert(new ProcessedKey("R1-" + $r.getPost().getId()));
+end
 
-  Suspension s = new Suspension();
-  s.setUser($u);
-  s.setType(SuspensionType.POST_BAN);
-  s.setReason("3 distinct reported posts in last 6h");
-  s.setStartAt(now);
-  s.setEndAt(now.plus(java.time.Duration.ofHours(6)));
+/* R2: >8 prijava jedne objave u 2 dana -> POSTING ban 2 dana */
+rule "R2: >8 prijava jedne objave u 2 dana -> POSTING ban 2 dana"
+when
+    $r : PostReport( getPost() != null,
+                     getPost().getAuthor() != null,
+                     getCreatedAt().isAfter(SINCE_2D) )
+    accumulate(
+        PostReport( getPost() == $r.getPost(),
+                    getCreatedAt().isAfter(SINCE_2D) ),
+        $num : count(1);
+        $num > 8
+    )
+    not ProcessedKey( key == "R2-" + $r.getPost().getId() )
+then
+    Suspension s = new Suspension();
+    s.setUser($r.getPost().getAuthor());
+    s.setType(SuspensionType.POST_BAN);
+    s.setEndAt(NOW.plus(2, ChronoUnit.DAYS));
+    s.setReason("R2: >8 prijava/2d");
+    sink.add(s);
+    insert(new ProcessedKey("R2-" + $r.getPost().getId()));
+end
 
-  insert(s);
+/* R3: >4 blokiranja u toku 1 dana -> POSTING ban 1 dan */
+rule "R3: >4 blokiranja u toku 1 dana -> POSTING ban 1 dan"
+when
+    $b : BlockEvent( getTarget() != null,
+                     getCreatedAt().isAfter(SINCE_1D) )
+    accumulate(
+        BlockEvent( getTarget() == $b.getTarget(),
+                    getCreatedAt().isAfter(SINCE_1D) ),
+        $num : count(1);
+        $num > 4
+    )
+    not ProcessedKey( key == "R3-" + $b.getTarget().getId() )
+then
+    Suspension s = new Suspension();
+    s.setUser($b.getTarget());
+    s.setType(SuspensionType.POST_BAN);
+    s.setEndAt(NOW.plus(1, ChronoUnit.DAYS));
+    s.setReason("R3: >4 blokiranja/1d");
+    sink.add(s);
+    insert(new ProcessedKey("R3-" + $b.getTarget().getId()));
+end
+
+/* R4: >2 blokiranja u 2 dana I post >4 prijave u 1 dan -> LOGIN ban 2 dana */
+rule "R4: >2 blokiranja u 2 dana I post >4 prijave u 1 dan -> LOGIN ban 2 dana"
+when
+    $b : BlockEvent( getTarget() != null,
+                     getCreatedAt().isAfter(SINCE_2D) )
+    accumulate(
+        BlockEvent( getTarget() == $b.getTarget(),
+                    getCreatedAt().isAfter(SINCE_2D) ),
+        $blk : count(1);
+        $blk > 2
+    )
+    exists(
+        accumulate(
+            PostReport( getPost() != null,
+                        getPost().getAuthor() == $b.getTarget(),
+                        getCreatedAt().isAfter(SINCE_1D) ),
+            $rc : count(1);
+            $rc > 4
+        )
+    )
+    not ProcessedKey( key == "R4-" + $b.getTarget().getId() )
+then
+    Suspension s = new Suspension();
+    s.setUser($b.getTarget());
+    s.setType(SuspensionType.LOGIN_BAN);
+    s.setEndAt(NOW.plus(2, ChronoUnit.DAYS));
+    s.setReason("R4: >2 blok/2d i >4 prijave/1d");
+    sink.add(s);
+    insert(new ProcessedKey("R4-" + $b.getTarget().getId()));
+end
+
+/* R5: ukupno >=12 prijava u 2 dana -> POSTING ban 2 dana */
+rule "R5: ukupno >=12 prijava u 2 dana -> POSTING ban 2 dana"
+when
+    $any : PostReport( getPost() != null,
+                       getPost().getAuthor() != null,
+                       getCreatedAt().isAfter(SINCE_2D) )
+    accumulate(
+        PostReport( getPost() != null,
+                    getPost().getAuthor() == $any.getPost().getAuthor(),
+                    getCreatedAt().isAfter(SINCE_2D) ),
+          $num : count(1);
+          $num >= 12
+    )
+    not ProcessedKey( key == "R5-" + $any.getPost().getAuthor().getId() )
+then
+    Suspension s = new Suspension();
+    s.setUser($any.getPost().getAuthor());
+    s.setType(SuspensionType.POST_BAN);
+    s.setEndAt(NOW.plus(2, ChronoUnit.DAYS));
+    s.setReason("R5: >=12 prijava/2d (svi postovi)");
+    sink.add(s);
+    insert(new ProcessedKey("R5-" + $any.getPost().getAuthor().getId()));
+end
+
+/* R6: >=3 blokiranja/6h i neka objava >=3 prijave/6h -> LOGIN ban 3 dana */
+rule "R6: >=3 blokiranja/6h i neka objava >=3 prijave/6h -> LOGIN ban 3 dana"
+when
+    $b : BlockEvent( getTarget() != null,
+                     getCreatedAt().isAfter(SINCE_6H) )
+    accumulate(
+        BlockEvent( getTarget() == $b.getTarget(),
+                    getCreatedAt().isAfter(SINCE_6H) ),
+        $blk : count(1);
+        $blk >= 3
+    )
+    exists(
+        accumulate(
+            PostReport( getPost() != null,
+                        getPost().getAuthor() == $b.getTarget(),
+                        getCreatedAt().isAfter(SINCE_6H) ),
+            $rc : count(1);
+            $rc >= 3
+        )
+    )
+    not ProcessedKey( key == "R6-" + $b.getTarget().getId() )
+then
+    Suspension s = new Suspension();
+    s.setUser($b.getTarget());
+    s.setType(SuspensionType.LOGIN_BAN);
+    s.setEndAt(NOW.plus(3, ChronoUnit.DAYS));
+    s.setReason("R6: >=3 blok/6h & >=3 prijave/6h");
+    sink.add(s);
+    insert(new ProcessedKey("R6-" + $b.getTarget().getId()));
 end

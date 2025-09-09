@@ -10,7 +10,8 @@ public class Post {
   @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @ManyToOne(optional=false)
+  @ManyToOne(optional = false, fetch = FetchType.LAZY)
+  @JoinColumn(name = "author_id", nullable = false)
   private User author;
 
   @Column(columnDefinition="TEXT")
@@ -29,10 +30,16 @@ public class Post {
      joinColumns=@JoinColumn(name="post_id"),
      inverseJoinColumns=@JoinColumn(name="user_id"))
   private Set<User> likedBy;
+  public int getLikeCount() {
+	    return likedBy == null ? 0 : likedBy.size(); 
+	}
 
   @OneToMany(mappedBy="post", cascade=CascadeType.ALL, orphanRemoval=true)
   private Set<PostReport> reports;
 
+  
+  
+  
   public Long getId() { return id; }
   public void setId(Long id) { this.id = id; }
   public User getAuthor() { return author; }

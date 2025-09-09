@@ -16,7 +16,18 @@ public class Suspension {
 
   @Enumerated(EnumType.STRING)
   private SuspensionType type;
-
+  
+  @Transient
+  public boolean isActiveAt(Instant ref) {
+      return endAt == null || endAt.isAfter(ref);
+  }
+  
+  @Transient
+  public boolean isActive() {
+      return isActiveAt(Instant.now());
+  }
+  
+  @Column(columnDefinition = "TEXT")
   private String reason;
 
   public Long getId() { return id; }

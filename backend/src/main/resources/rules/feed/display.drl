@@ -1,0 +1,50 @@
+package feed
+
+import com.example.sbz.feed.Candidate;
+
+global java.time.Instant now;
+global java.util.Set popularHashtags;
+global java.util.Set ownHashtags;     // heštegovi iz tvojih objava
+global java.util.Set likedHashtags;   // heštegovi objava koje si lajkovao (ako nemaš like-ove još, šaljemo prazno)
+
+dialect "java"
+
+// Popularna objava: u poslednja 24h i dovoljno lajkova
+rule "popular post"
+no-loop
+when
+  $c : Candidate( isYoungerThanHours(24, now) && likes >=6 )
+then
+  $c.addScore(1, "popularPost");
+  //update($c);
+end
+
+// Popularan hešteg u poslednjih 24h
+rule "popular hashtag"
+no-loop
+when
+  $c : Candidate( hasAny(popularHashtags) )
+then
+  $c.addScore(1, "popularHashtag");
+  //update($c);
+end
+
+// Tvoji heštegovi (iz sopstvenih objava)
+rule "own hashtag affinity"
+no-loop 
+when
+  $c : Candidate( hasAny(ownHashtags) )
+then
+  $c.addScore(1, "ownHashtag");
+   //update($c);
+end
+
+// Heštegovi koje korisnik lajkuje (ako još nemaš like-ove, ostaje 0)
+rule "liked hashtag affinity"
+no-loop
+when
+  $c : Candidate( hasAny(likedHashtags) )
+then
+  $c.addScore(1, "likedHashtag");
+  //update($c);
+end

@@ -1,0 +1,118 @@
+.badusers-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+.page-head {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.page-head h1 {
+  font-size: 28px;
+  margin: 0;
+}
+
+.btn {
+  padding: 10px 14px;
+  border: 0;
+  border-radius: 10px;
+  background: #2563eb; /* plava */
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform .06s ease, opacity .2s ease;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+.btn:disabled,
+.btn-disabled {
+  background: #d1d5db;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.status {
+  margin: 8px 0 12px;
+  color: #b91c1c; /* crvenkasta */
+  font-weight: 600;
+}
+
+.table-card {
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  border: 1px solid #e5e7eb;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  border-radius: 14px;
+}
+
+.nice-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 14px;
+}
+
+.nice-table thead th {
+  text-align: left;
+  background: #f3f4f6;
+  padding: 12px 14px;
+  font-weight: 700;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.nice-table tbody td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: top;
+}
+
+.nice-table tbody tr:hover {
+  background: #fafafa;
+}
+
+.nice-table .empty {
+  text-align: center;
+  padding: 20px;
+  color: #6b7280;
+}
+
+.user { font-weight: 600; }
+
+.reason {
+  white-space: pre-wrap;
+  line-height: 1.25;
+  max-width: 900px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  background: #e5e7eb;
+  color: #111827;
+}
+
+/* par primera po tipu, prilagodi po svojim SuspensionType vrednostima */
+.badge.post_ban { background:#fee2e2; color:#991b1b; }
+.badge.login_ban { background:#e0e7ff; color:#3730a3; }
+.badge.spam { background:#dcfce7; color:#166534; }
+.badge.abuse { background:#ffedd5; color:#9a3412; }
+.badge.unknown { background:#e5e7eb; color:#111827; }
+
+.hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #6b7280;
+}

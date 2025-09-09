@@ -1,16 +1,18 @@
 export type SuspensionDto = {
   id: number;
-  user: { id:number; firstName:string; lastName:string };
-  startAt: string;
+  userId: number | null;
+  userName: string;
+  startAt: string | null;
   endAt: string | null;
-  type: string;
-  reason: string;
+  type: string | null;
+  reason: string | null;
 };
 
 // ispravljena funkcija – koristi isti helper kao i admin “places”
 export const api = {
   detectBadUsers: async (): Promise<SuspensionDto[]> =>
-    authedPOST('/api/admin/detect-bad-users', {}),  // POST na /api/admin/...
+   // authedPOST('/api/admin/detect-bad-users', {}),  // POST na /api/admin/...
+    authedPOST('/api/detection/run', {})
 };
 
 export async function register(data: {
@@ -208,5 +210,8 @@ export function isAdminFromToken(): boolean {
   } catch { return false; }
 }
 
+export async function listActiveSuspensions(): Promise<SuspensionDto[]> {
+  return authedGET('/api/suspensions/active');
+}
 
 

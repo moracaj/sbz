@@ -35,8 +35,7 @@ public class FeedService {
     Instant now = Instant.now();
 
     
-    
-    
+       
     
     // 1) prijatelji (24h)
     Set<Long> friendIds = userRepo.findFriendIds(viewer.getId());
@@ -140,12 +139,7 @@ public class FeedService {
                 " likedBySimilar=" + likedBySimilar +
                 " similarToLiked=" + similarToLiked);
         }
-        
-        
-        
-        
-        
-        
+
         
         
         
@@ -171,15 +165,11 @@ public class FeedService {
           boolean likedBySimilar = !Collections.disjoint(likers, similarUsers);
           if (likedBySimilar) {
             c.addScore(1, "similarUsersLiked");
-            
-       
-            
+             
             
           }
           
-         
-          
-          
+   
 
           // (B) „Slična objavi koju je korisnik lajkovao“ => >=70% preklapanja lajkera
           boolean similarToLiked = isSimilarToAnyUserLiked(pid, viewerLikedIds, likersByPost, 0.70);

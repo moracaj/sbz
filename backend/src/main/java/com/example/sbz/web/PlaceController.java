@@ -99,12 +99,7 @@ public class PlaceController {
 
   // --- PUBLIC (pregled) ---
 
- /* @GetMapping
-  public ResponseEntity<List<PlaceDto>> list(){
-    List<Place> places = placeRepo.findAll();
-    // napomena: Place ima set<Rating>, set<Hashtag>; ako LAZY, može se rešiti @EntityGraph u repo
-    return ResponseEntity.ok(places.stream().map(PlaceController::toDto).toList());
-  }*/
+
   @GetMapping
   @Transactional(readOnly = true)
   public ResponseEntity<List<PlaceDto>> list(){
@@ -112,17 +107,6 @@ public class PlaceController {
     return ResponseEntity.ok(places.stream().map(PlaceController::toDto).toList());
   }
   
-  
-  
-
- /* @GetMapping("/{id}")
-  public ResponseEntity<PlaceDetailsDto> details(@PathVariable("id") Long id){
-    Place p = placeRepo.findById(id).orElseThrow();
-    var base = toDto(p);
-    // load ratings (pošto @OneToMany može biti LAZY)
-    var ratings = ratingRepo.findByPlace(p).stream().map(PlaceController::toDto).toList();
-    return ResponseEntity.ok(new PlaceDetailsDto(base, ratings));
-  }*/
   @GetMapping("/{id}")
   @Transactional(readOnly = true)
   public ResponseEntity<PlaceDetailsDto> details(@PathVariable("id") Long id){
@@ -131,10 +115,6 @@ public class PlaceController {
     var ratings = p.getRatings().stream().map(PlaceController::toDto).toList();
     return ResponseEntity.ok(new PlaceDetailsDto(base, ratings));
   }
-  
-  
-  
-  
 
   // --- ADMIN (dodavanje i ocenjivanje) ---
 

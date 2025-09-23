@@ -25,17 +25,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/me")
 @CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
-/*public class MyController {
 
-  private final UserRepo userRepo;
-  private final PostRepo postRepo;
-  private final HashtagRepo hashtagRepo;
-
-  public MyController(UserRepo userRepo, PostRepo postRepo, HashtagRepo hashtagRepo) {
-    this.userRepo = userRepo;
-    this.postRepo = postRepo;
-    this.hashtagRepo = hashtagRepo;
-  }*/
 
  public class MyController {
    private final UserRepo userRepo;

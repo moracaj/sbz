@@ -48,9 +48,6 @@ public class BadUserDetectionService {
 
       // ubacujemo sve korisnike kao činjenice
       userRepo.findAll().forEach(ks::insert);
-
-      
-      
      
 
       ks.setGlobal("NOW", now);

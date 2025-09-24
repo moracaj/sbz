@@ -115,7 +115,7 @@ public class FeedService {
         
         
         // skup korisnika sličnih posmatraču (Pearson >= 0.5)
-        Set<Long> similarUsers = computeSimilarUsers(viewer.getId(), likersByPost, 0.3);
+        Set<Long> similarUsers = computeSimilarUsers(viewer.getId(), likersByPost, 0.1);
 
         System.out.println("viewerLikedIds = " + viewerLikedIds);
         System.out.println("similarUsers   = " + similarUsers);
@@ -202,9 +202,14 @@ public class FeedService {
 
     // 7) top 20 po score, zatim novije
    List<Long> topIds = facts.stream()
-        .sorted(Comparator.comparingInt(Candidate::getScore).reversed()
-            .thenComparing(Candidate::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder())).reversed())
-        .limit(20)
+       // .sorted(Comparator.comparingInt(Candidate::getScore).reversed()
+         //   .thenComparing(Candidate::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder())).reversed())
+		   .sorted(
+				      Comparator.comparingInt(Candidate::getScore).reversed()
+				        .thenComparing(Candidate::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder()))
+				        .thenComparing(Candidate::getPostId) // opciono: stabilan redosled kad je sve isto
+				  )
+		   .limit(20)
         .map(Candidate::getPostId)
         .toList();
   
@@ -315,7 +320,7 @@ public class FeedService {
   private Set<Long> computeSimilarUsers(Long viewerId,
                                         Map<Long, Set<Long>> likersByPost,
                                         double threshold) {
-    // izvučemo sve korisnike koji se pojavljuju kao lajk-ke
+    // izvučemo sve korisnike koji se pojavljuju kao lajk
     Set<Long> allUsers = new HashSet<>();
     likersByPost.values().forEach(allUsers::addAll);
     allUsers.remove(viewerId);
@@ -332,9 +337,24 @@ public class FeedService {
           .filter(e -> e.getValue().contains(other))
           .map(Map.Entry::getKey)
           .collect(Collectors.toSet());
+// ///////
+      // presek (zajednički lajkovani postovi)
+      int inter = 0;
+      for (Long x : viewerVector) if (otherVector.contains(x)) inter++;
 
-      double corr = pearsonBinary(viewerVector, otherVector);
-      if (corr >= threshold) result.add(other);
+      if (inter < 3) continue;                 // minimalno 3 ista lajka
+
+      double r = pearsonBinary(viewerVector, otherVector);
+
+      // GATED PRIHVATANJE:
+      // - standardno: r >= 0.10 i bar 3 ista lajka
+      // - fallback: dozvoli blago negativno do -0.40 ako je presek >= 4
+      boolean accept = (r >= 0.10) || (inter >= 4 && r >= -0.40);
+
+      if (accept) result.add(other);  
+// ///////
+     // double corr = pearsonBinary(viewerVector, otherVector);
+      //if (corr >= 0.10) result.add(other);
     }
     return result;
   }
@@ -367,6 +387,8 @@ public class FeedService {
 	        return 1.0;
 	    }
 	    return num / den;
+	    
+
 	}
 
   /** Dve objave su „slične“ ako se ≥70% korisnika koji su lajkovali jednu nalaze i u listi lajkera druge (proveravamo u oba smera). */
